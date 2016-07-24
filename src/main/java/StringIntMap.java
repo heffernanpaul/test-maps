@@ -90,7 +90,8 @@ public class StringIntMap {
 				
 				// do we have a match ?
 				int offset = stringListIndex * 4;
-				if (hashcode == stringTable[offset] && s.length() == stringTable[offset+LENGTH] && equals(s, offset)) {
+				if (hashcode == stringTable[offset] && s.length() == stringTable[offset+LENGTH] && 
+						equals(s, stringTable[offset+START_CHARS])) {
 					return stringListIndex;
 				}
 				// Are we at the end?
@@ -139,5 +140,10 @@ public class StringIntMap {
 		}
 		return true;
 		
+	}
+
+	public int compareFragment(String s, int chIndex, int stepIndex) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 }

@@ -20,11 +20,11 @@ public class PathIntMap {
 	 */
 	private int[] stringTable;
 	
-	private char[] stepIndexArray;
+	private int[] stepIndexArray;
 	
 	
 	private int numStrings = 1;
-	private int numChars = 0;
+	private int numSteps = 0;
 	private int hashMask;
 	private int numHashBits;
 	
@@ -38,7 +38,7 @@ public class PathIntMap {
 		hashMask = tableSize-1;
 		hashTable = new int[tableSize];
 		stringTable = new int[(5+2)*capacity];
-		stepIndexArray = new char[wordSize*capacity * 3 / 2];
+		stepIndexArray = new int[wordSize*capacity * 3 / 2];
 	}
 	
 	public int getMaxDepth() {
@@ -59,7 +59,6 @@ public class PathIntMap {
 		
 		if (startListIndex == 0) {
 		
-			// insert new string
 			return insertString(s, hashCode, hashIndex);
 
 		} else {
@@ -67,17 +66,15 @@ public class PathIntMap {
 			while (startListIndex != 0) {
 
 				int offset = startListIndex * 4;
-				if (hashCode == stringTable[offset] && length == stringTable[offset+LENGTH] && equals(s, stringTable[offset+START_STEPS])) {
-//					maxDepth = Math.max(maxDepth,  depth);
+				if (hashCode == stringTable[offset] && length == stringTable[offset+LENGTH] && 
+						equals(s, stringTable[offset+START_STEPS], stringTable[offset+NUM_STEPS])) {
 					return startListIndex;
 				}
 				
 				startListIndex = stringTable[offset+NEXT];
-	//			depth++;
 
 			}
 			
-		//		maxDepth = Math.max(maxDepth,  depth);
 			return insertString(s, hashCode, hashIndex);
 
 		}
@@ -101,7 +98,8 @@ public class PathIntMap {
 				
 				// do we have a match ?
 				int offset = stringListIndex * 4;
-				if (hashcode == stringTable[offset] && s.length() == stringTable[offset+LENGTH] && equals(s, offset)) {
+				if (hashcode == stringTable[offset] && s.length() == stringTable[offset+LENGTH] && 
+						equals(s, stringTable[offset+START_STEPS], stringTable[offset+NUM_STEPS])) {
 					return stringListIndex;
 				}
 				// Are we at the end?
@@ -118,14 +116,17 @@ public class PathIntMap {
 		int stringListIndex;
 		stringListIndex = numStrings++;
 
+		String[] steps = s.split(separator);
+
 		int offset = stringListIndex * 4	;
 		stringTable[offset] = hashcode;
 		stringTable[offset+LENGTH] = s.length();
-		stringTable[offset+START_STEPS] = numChars;
+		stringTable[offset+START_STEPS] = numSteps;
+		stringTable[offset+NUM_STEPS] = steps.length;
 
-		String[] steps = s.split(separator);
-		for (int i = 0; i < s.length(); i++) {
-			stepIndexArray[numChars++] = s.charAt(i);
+
+		for (String step : steps) {
+			stepIndexArray[numSteps++] = this.stepMap.indexOf(step);
 		}
 		return stringListIndex;
 	}
@@ -142,12 +143,16 @@ public class PathIntMap {
 		return new String(stepIndexArray, stringTable[offset+START_STEPS], stringTable[offset+LENGTH]);
 	}
 	
-	public boolean equals(String s, int offset) {
+	public boolean equals(String s, int offset, int numSteps) {
 		
-		for (int i = 0; i < s.length(); i++) {
-			if (stepIndexArray[offset++] != s.charAt(i)) {
+		int chIndex = 0;
+		for (int step = 0; step < numSteps; step++) {
+			int stepIndex = stepIndexArray[offset+step];
+			int numCharsMatching = stepMap.compareFragment(s, chIndex, stepIndex);
+			if (numCharsMatching == 0) {
 				return false;
-			};
+			}
+			chIndex += numCharsMatching;
 		}
 		return true;
 		
