@@ -1,13 +1,11 @@
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
+import org.junit.Test;
 
-public class Test {
+public class TestMaps {
 
-	public static void main(String[] args) throws Exception {
+	@Test
+	public void main() throws Exception {
 
 		int numWords = 500000;
 		int wordSize = 20;
@@ -109,43 +107,5 @@ public class Test {
 		
 		
 	}
-	
-	public static void main1(String[] args) {
-		DB db = DBMaker.memoryDB().make();
-		int size = 100000;
 
-		Map<String,Integer> hashMap = new HashMap<>();
-		Map<String,Integer> mapDB = (Map<String,Integer>)db.hashMap("map").make();
-		
-		testMapWrite(hashMap, size, "hashMap");
-		testMapRead(hashMap, size, "hashMap");
-		testMapWrite(mapDB, size, "MapDB");
-		testMapRead(mapDB, size, "MapDB");
-
-		hashMap.clear();
-		mapDB.clear();
-		
-		testMapWrite(hashMap, size, "hashMap");
-		testMapRead(hashMap, size, "hashMap");
-		testMapWrite(mapDB, size, "MapDB");
-		testMapRead(mapDB, size, "MapDB");
-
-	}
-
-	private static void testMapWrite(Map<String,Integer> map, int size, String mapType) {
-		long start = System.currentTimeMillis();
-		for (int i = 0; i < size; i++) {
-			map.put("something" + i, i);
-		}
-		long end = System.currentTimeMillis();
-		System.out.println("Time taken for put " + mapType + " = " + (end-start) + " mills");
-	}
-	private static void testMapRead(Map<String,Integer> map, int size, String mapType) {
-		long start = System.currentTimeMillis();
-		for (int i = 0; i < size; i++) {
-			int value = map.get("something" + i);
-		}
-		long end = System.currentTimeMillis();
-		System.out.println("Time taken for get " + mapType + " = " + (end-start) + " mills");
-	}
 }
