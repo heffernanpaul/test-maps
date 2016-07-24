@@ -5,6 +5,8 @@ public class StringIntMap {
 	private static final int START_CHARS = 2;
 	private static final int NEXT = 3;
 
+	private int maxDepth = 0;
+	
 	private int[] hashTable;
 	
 	private int[] stringTable;
@@ -24,49 +26,62 @@ public class StringIntMap {
 		int tableSize = (int)Math.pow(2, numHashBits);
 		hashMask = tableSize-1;
 		hashTable = new int[tableSize];
-		stringTable = new int[4*capacity];
-		charArray = new char[wordSize*capacity];
+		stringTable = new int[(4+2)*capacity];
+		charArray = new char[wordSize*capacity * 3 / 2];
 	}
 	
+	public int getMaxDepth() {
+		return maxDepth;
+	}
+    static final int hash(Object key) {
+        int h;
+        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+    }
+
 	public int indexOf(String s) {
 
-		int hashCode = s.hashCode();
+		int hashCode = hash(s);
 		int hashIndex = hashCode & hashMask;
 		
 		int startListIndex = hashTable[hashIndex];
-
+		int length = s.length();
 		
 		if (startListIndex == 0) {
 		
 			// insert new string
-			return insertString(s, hashIndex);
+			return insertString(s, hashCode, hashIndex);
 
 		} else {
+			//int depth = 0;
 			while (startListIndex != 0) {
 
 				int offset = startListIndex * 4;
-				if (s.hashCode() == stringTable[offset] && s.length() == stringTable[offset+LENGTH] && equals(s, stringTable[offset+START_CHARS])) {
+				if (hashCode == stringTable[offset] && length == stringTable[offset+LENGTH] && equals(s, stringTable[offset+START_CHARS])) {
+//					maxDepth = Math.max(maxDepth,  depth);
 					return startListIndex;
 				}
 				
 				startListIndex = stringTable[offset+NEXT];
+	//			depth++;
 
 			}
-			return insertString(s, hashIndex);
+			
+		//		maxDepth = Math.max(maxDepth,  depth);
+			return insertString(s, hashCode, hashIndex);
 
 		}
 		
 	}
 	
-	private synchronized int insertString(String s, int hashIndex) {
+	private synchronized int insertString(String s, int hashcode, int hashIndex) {
 
-		ensureCapacity(s);
+//		ensureCapacity(s);
 
 		int stringListIndex = hashTable[hashIndex];
 
 		if (stringListIndex == 0) {			
 
-			hashTable[hashIndex] = addStringToTable(s);
+			hashTable[hashIndex] = addStringToTable(s, hashcode);
 			return hashTable[hashIndex];		
 		}
 		else {
@@ -75,24 +90,25 @@ public class StringIntMap {
 				
 				// do we have a match ?
 				int offset = stringListIndex * 4;
-				if (s.hashCode() == stringTable[offset] && s.length() == stringTable[offset+LENGTH] && equals(s, offset)) {
+				if (hashcode == stringTable[offset] && s.length() == stringTable[offset+LENGTH] && equals(s, offset)) {
 					return stringListIndex;
 				}
 				// Are we at the end?
-				if (stringTable[offset+NEXT] == 0) {
-					stringTable[offset+NEXT] = addStringToTable(s);
+				stringListIndex = stringTable[offset+NEXT];
+				if (stringListIndex == 0) {
+					stringTable[offset+NEXT] = addStringToTable(s, hashcode);
 					return stringTable[offset+NEXT];		
-				}
+				} 
 			}			
 		}
 	}
 
-	private int addStringToTable(String s) {
+	private int addStringToTable(String s, int hashcode) {
 		int stringListIndex;
 		stringListIndex = numStrings++;
 
-		int offset = stringListIndex * 4;
-		stringTable[offset] = s.hashCode();
+		int offset = stringListIndex * 4	;
+		stringTable[offset] = hashcode;
 		stringTable[offset+LENGTH] = s.length();
 		stringTable[offset+START_CHARS] = numChars;
 
@@ -109,7 +125,7 @@ public class StringIntMap {
 
 	public String getString(int index) {
 
-		int offset = index * 4;
+		int offset = index << 2;
 		
 		return new String(charArray, stringTable[offset+START_CHARS], stringTable[offset+LENGTH]);
 	}
